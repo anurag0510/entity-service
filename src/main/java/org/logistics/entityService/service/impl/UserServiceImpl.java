@@ -59,4 +59,34 @@ public class UserServiceImpl implements UserService {
         }.getType();
         return modelMapper.map(post, listType);
     }
+
+    @Override
+    public List<UserDto> getAllUsersWithUid(String uid, boolean allUsers) {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        List<UserEntity> post = !allUsers ? (List<UserEntity>) usersRepository.findAllActiveUsersWithUid(uid) : (List<UserEntity>) usersRepository.findAllUsersWithUid(uid);
+        Type listType = new TypeToken<List<UserDto>>() {
+        }.getType();
+        return modelMapper.map(post, listType);
+    }
+
+    @Override
+    public List<UserDto> getAllUsersWithUserName(String userName, boolean allUsers) {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        List<UserEntity> post = !allUsers ? (List<UserEntity>) usersRepository.findAllActiveUsersWithUserName(userName) : (List<UserEntity>) usersRepository.findAllUsersWithUserName(userName);
+        Type listType = new TypeToken<List<UserDto>>() {
+        }.getType();
+        return modelMapper.map(post, listType);
+    }
+
+    @Override
+    public List<UserDto> getAllUsersWithEmailAddress(String emailAddress, boolean allUsers) {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        List<UserEntity> post = !allUsers ? (List<UserEntity>) usersRepository.findAllActiveUsersWithEmailAddress(emailAddress) : (List<UserEntity>) usersRepository.findAllUsersWithEmailAddress(emailAddress);
+        Type listType = new TypeToken<List<UserDto>>() {
+        }.getType();
+        return modelMapper.map(post, listType);
+    }
 }

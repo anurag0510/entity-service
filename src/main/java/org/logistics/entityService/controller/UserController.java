@@ -1,6 +1,7 @@
 package org.logistics.entityService.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.logistics.entityService.exceptions.UserServiceException;
 import org.logistics.entityService.model.request.CreateUserRequestModel;
 import org.logistics.entityService.model.response.CreateUserResponseModel;
 import org.logistics.entityService.model.response.GetAllUsersResponseModel;
@@ -53,5 +54,40 @@ public class UserController {
         CreateUserResponseModel createUserResponseModel = modelMapper.map(userService.createUser(userDto), CreateUserResponseModel.class);
         log.info("Returning Details : {}", createUserResponseModel);
         return new ResponseEntity<>(createUserResponseModel, HttpStatus.CREATED);
+    }
+
+    @GetMapping(value = "/{filter}/{value}")
+    public ResponseEntity<GetAllUsersResponseModel> getUser(
+            @RequestParam(value = "all", defaultValue = "false", required = false) boolean all,
+            @PathVariable(value = "filter", required = true) String filter,
+            @PathVariable(value = "value", required = true) String value
+    ) {
+        if (!filter.matches("(?i)uid|user_name|email_address"))
+            throw new UserServiceException("Only allowed to filter via : uid, userName, emailAddress");
+        GetAllUsersResponseModel returnValue = new GetAllUsersResponseModel();
+        returnValue.setSuccess(true);
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        Type listType = new TypeToken<List<CreateUserResponseModel>>() {
+        }.getType();
+        if (filter.matches("(?i)uid")) {
+            List<CreateUserResponseModel> usersList = modelMapper.map(userService.getAllUsersWithUid(value, all), listType);
+            if (usersList.size() == 0)
+                throw new UserServiceException("No such user is present/active in system with uid : " + value);
+            returnValue.setData(usersList);
+        }
+        if (filter.matches("(?i)user_name")) {
+            List<CreateUserResponseModel> usersList = modelMapper.map(userService.getAllUsersWithUserName(value, all), listType);
+            if (usersList.size() == 0)
+                throw new UserServiceException("No such user is present/active in system with user_name : " + value);
+            returnValue.setData(usersList);
+        }
+        if (filter.matches("(?i)email_address")) {
+            List<CreateUserResponseModel> usersList = modelMapper.map(userService.getAllUsersWithEmailAddress(value, all), listType);
+            if (usersList.size() == 0)
+                throw new UserServiceException("No such user is present/active in system with email_address : " + value);
+            returnValue.setData(usersList);
+        }
+        return new ResponseEntity<>(returnValue, HttpStatus.OK);
     }
 }
