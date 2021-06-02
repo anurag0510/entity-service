@@ -3,6 +3,7 @@ package org.logistics.entityService.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.logistics.entityService.exceptions.UserServiceException;
 import org.logistics.entityService.model.request.CreateUserRequestModel;
+import org.logistics.entityService.model.request.UpdateUserRequestModel;
 import org.logistics.entityService.model.response.CreateUserResponseModel;
 import org.logistics.entityService.model.response.GetAllUsersResponseModel;
 import org.logistics.entityService.service.UserService;
@@ -63,7 +64,7 @@ public class UserController {
             @PathVariable(value = "value", required = true) String value
     ) {
         if (!filter.matches("(?i)uid|user_name|email_address"))
-            throw new UserServiceException("Only allowed to filter via : uid, userName, emailAddress");
+            throw new UserServiceException("Only allowed to filter via : uid, user_name, email_address");
         GetAllUsersResponseModel returnValue = new GetAllUsersResponseModel();
         returnValue.setSuccess(true);
         ModelMapper modelMapper = new ModelMapper();
@@ -87,6 +88,30 @@ public class UserController {
             if (usersList.size() == 0)
                 throw new UserServiceException("No such user is present/active in system with email_address : " + value);
             returnValue.setData(usersList);
+        }
+        return new ResponseEntity<>(returnValue, HttpStatus.OK);
+    }
+
+    @PutMapping(value = "/{filter}/{value}")
+    public ResponseEntity<CreateUserResponseModel> updateUser(
+            @Valid @RequestBody UpdateUserRequestModel userDetails,
+            @PathVariable(value = "filter", required = true) String filter,
+            @PathVariable(value = "value", required = true) String value
+    ) {
+        if (!filter.matches("(?i)uid|user_name|email_address"))
+            throw new UserServiceException("Only allowed to filter via : uid, user_name, email_address");
+        CreateUserResponseModel returnValue = null;
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
+        if (filter.matches("(?i)uid")) {
+            returnValue = modelMapper.map(userService.updateUserBasedOnUid(userDto, value), CreateUserResponseModel.class);
+        }
+        if (filter.matches("(?i)user_name")) {
+            returnValue = modelMapper.map(userService.updateUserBasedOnUserName(userDto, value), CreateUserResponseModel.class);
+        }
+        if (filter.matches("(?i)email_address")) {
+            returnValue = modelMapper.map(userService.updateUserBasedOnEmailAddress(userDto, value), CreateUserResponseModel.class);
         }
         return new ResponseEntity<>(returnValue, HttpStatus.OK);
     }

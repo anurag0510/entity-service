@@ -15,4 +15,12 @@ public interface UserService {
     List<UserDto> getAllUsersWithEmailAddress(String value, boolean all);
 
     List<UserDto> getAllUsersWithUserName(String value, boolean all);
+
+    UserDto updateUserBasedOnUid(UserDto userDto, String uid);
+
+    UserDto updateUserBasedOnUserName(UserDto userDto, String userName);
+
+    UserDto updateUserBasedOnEmailAddress(UserDto userDto, String emailAddress);
+
+    List<UserDto> getAllUsersWithMobileNumber(String countryCode, String mobileNumber, boolean allUsers);
 }

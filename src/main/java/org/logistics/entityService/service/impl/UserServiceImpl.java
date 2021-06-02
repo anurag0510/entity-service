@@ -89,4 +89,84 @@ public class UserServiceImpl implements UserService {
         }.getType();
         return modelMapper.map(post, listType);
     }
+
+    @Override
+    public UserDto updateUserBasedOnUid(UserDto userDto, String uid) {
+        List<UserDto> users = getAllUsersWithUid(uid, false);
+        if (users.size() == 0)
+            throw new UserServiceException("No user exist in system with uid : " + uid);
+        UserDto systemUser = users.get(0);
+        checkExceptions(userDto, systemUser);
+        setUserDtoData(userDto, systemUser);
+        usersRepository.updateUserBasedOnUid(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), uid);
+        return userDto;
+    }
+
+    @Override
+    public UserDto updateUserBasedOnUserName(UserDto userDto, String userName) {
+        List<UserDto> users = getAllUsersWithUserName(userName, false);
+        if (users.size() == 0)
+            throw new UserServiceException("No user exist in system with user_name : " + userName);
+        UserDto systemUser = users.get(0);
+        checkExceptions(userDto, systemUser);
+        setUserDtoData(userDto, systemUser);
+        usersRepository.updateUserBasedOnUserName(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), userName);
+        return userDto;
+    }
+
+    @Override
+    public UserDto updateUserBasedOnEmailAddress(UserDto userDto, String emailAddress) {
+        List<UserDto> users = getAllUsersWithEmailAddress(emailAddress, false);
+        if (users.size() == 0)
+            throw new UserServiceException("No user exist in system with email_address : " + emailAddress);
+        UserDto systemUser = users.get(0);
+        checkExceptions(userDto, systemUser);
+        setUserDtoData(userDto, systemUser);
+        usersRepository.updateUserBasedOnEmailAddress(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), emailAddress);
+        return userDto;
+    }
+
+    @Override
+    public List<UserDto> getAllUsersWithMobileNumber(String countryCode, String mobileNumber, boolean allUsers) {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        List<UserEntity> post = !allUsers ? (List<UserEntity>) usersRepository.findAllActiveUsersWithMobileNumber(countryCode, mobileNumber) : (List<UserEntity>) usersRepository.findAllUsersWithMobileNumber(countryCode, mobileNumber);
+        Type listType = new TypeToken<List<UserDto>>() {
+        }.getType();
+        return modelMapper.map(post, listType);
+    }
+
+    private void checkExceptions(UserDto userDto, UserDto systemUser) {
+        if ((userDto.getUserName() != null && !userDto.getUserName().equals(systemUser.getUserName())) && getAllUsersWithUserName(userDto.getUserName(), false).size() != 0)
+            throw new UserServiceException("Can't update user with the user_name : " + userDto.getUserName() + " as system already has a user with same user_name present.");
+        if ((userDto.getEmailAddress() != null && !userDto.getEmailAddress().equals(systemUser.getEmailAddress())) && getAllUsersWithEmailAddress(userDto.getEmailAddress(), false).size() != 0)
+            throw new UserServiceException("Can't update user with the email_address : " + userDto.getEmailAddress() + " as system already has a user with same email address present.");
+        if ((userDto.getMobileNumber() != null && !userDto.getMobileNumber().equals(systemUser.getMobileNumber())) && getAllUsersWithMobileNumber(userDto.getCountryCode(), systemUser.getMobileNumber(), false).size() != 0)
+            throw new UserServiceException("Can't update user with the mobile_number : " + userDto.getMobileNumber() + " as system already has a user with same mobile number present.");
+    }
+
+    private void setUserDtoData(UserDto userDto, UserDto systemUser) {
+        if (userDto.getUid() == null)
+            userDto.setUid(systemUser.getUid());
+        if (userDto.getUserName() == null)
+            userDto.setUserName(systemUser.getUserName());
+        if (userDto.getFirstName() == null)
+            userDto.setFirstName(systemUser.getFirstName());
+        if (userDto.getLastName() == null)
+            userDto.setLastName(systemUser.getLastName());
+        if (userDto.getEmailAddress() == null)
+            userDto.setEmailAddress(systemUser.getEmailAddress());
+        if (userDto.getMobileNumber() == null)
+            userDto.setMobileNumber(systemUser.getMobileNumber());
+        if (userDto.getCountryCode() == null)
+            userDto.setCountryCode(systemUser.getCountryCode());
+        if (userDto.getCountry() == null)
+            userDto.setCountry(systemUser.getCountry());
+        if (userDto.getCity() == null)
+            userDto.setCity(systemUser.getCity());
+        if (userDto.getAddress() == null)
+            userDto.setAddress(systemUser.getAddress());
+        if (userDto.getActive() != systemUser.getActive())
+            userDto.setActive(systemUser.getActive());
+    }
 }
