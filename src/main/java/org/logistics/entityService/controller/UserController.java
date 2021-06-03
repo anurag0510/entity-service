@@ -1,11 +1,13 @@
 package org.logistics.entityService.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.logistics.entityService.exceptions.UserServiceException;
+import org.logistics.entityService.exceptions.EntityServiceException;
 import org.logistics.entityService.model.request.CreateUserRequestModel;
 import org.logistics.entityService.model.request.UpdateUserRequestModel;
+import org.logistics.entityService.model.request.ValidateUserPasswordRequestModel;
 import org.logistics.entityService.model.response.CreateUserResponseModel;
 import org.logistics.entityService.model.response.GetAllUsersResponseModel;
+import org.logistics.entityService.model.response.ValidatePasswordResponseModel;
 import org.logistics.entityService.service.UserService;
 import org.logistics.entityService.shared.UserDto;
 import org.modelmapper.ModelMapper;
@@ -64,7 +66,7 @@ public class UserController {
             @PathVariable(value = "value", required = true) String value
     ) {
         if (!filter.matches("(?i)uid|user_name|email_address"))
-            throw new UserServiceException("Only allowed to filter via : uid, user_name, email_address");
+            throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
         GetAllUsersResponseModel returnValue = new GetAllUsersResponseModel();
         returnValue.setSuccess(true);
         ModelMapper modelMapper = new ModelMapper();
@@ -74,19 +76,19 @@ public class UserController {
         if (filter.matches("(?i)uid")) {
             List<CreateUserResponseModel> usersList = modelMapper.map(userService.getAllUsersWithUid(value, all), listType);
             if (usersList.size() == 0)
-                throw new UserServiceException("No such user is present/active in system with uid : " + value);
+                throw new EntityServiceException("No such user is present/active in system with uid : " + value);
             returnValue.setData(usersList);
         }
         if (filter.matches("(?i)user_name")) {
             List<CreateUserResponseModel> usersList = modelMapper.map(userService.getAllUsersWithUserName(value, all), listType);
             if (usersList.size() == 0)
-                throw new UserServiceException("No such user is present/active in system with user_name : " + value);
+                throw new EntityServiceException("No such user is present/active in system with user_name : " + value);
             returnValue.setData(usersList);
         }
         if (filter.matches("(?i)email_address")) {
             List<CreateUserResponseModel> usersList = modelMapper.map(userService.getAllUsersWithEmailAddress(value, all), listType);
             if (usersList.size() == 0)
-                throw new UserServiceException("No such user is present/active in system with email_address : " + value);
+                throw new EntityServiceException("No such user is present/active in system with email_address : " + value);
             returnValue.setData(usersList);
         }
         return new ResponseEntity<>(returnValue, HttpStatus.OK);
@@ -99,7 +101,7 @@ public class UserController {
             @PathVariable(value = "value", required = true) String value
     ) {
         if (!filter.matches("(?i)uid|user_name|email_address"))
-            throw new UserServiceException("Only allowed to filter via : uid, user_name, email_address");
+            throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
         CreateUserResponseModel returnValue = null;
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
@@ -113,6 +115,51 @@ public class UserController {
         if (filter.matches("(?i)email_address")) {
             returnValue = modelMapper.map(userService.updateUserBasedOnEmailAddress(userDto, value), CreateUserResponseModel.class);
         }
+        return new ResponseEntity<>(returnValue, HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/{filter}/{value}")
+    public ResponseEntity<CreateUserResponseModel> deleteUser(
+            @PathVariable(value = "filter", required = true) String filter,
+            @PathVariable(value = "value", required = true) String value
+    ) {
+        if (!filter.matches("(?i)uid|user_name|email_address"))
+            throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
+        CreateUserResponseModel returnValue = null;
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        if (filter.matches("(?i)uid")) {
+            returnValue = modelMapper.map(userService.deleteUserBasedOnUid(value), CreateUserResponseModel.class);
+        }
+        if (filter.matches("(?i)user_name")) {
+            returnValue = modelMapper.map(userService.deleteUserBasedOnUserName(value), CreateUserResponseModel.class);
+        }
+        if (filter.matches("(?i)email_address")) {
+            returnValue = modelMapper.map(userService.deleteUserBasedOnEmailAddress(value), CreateUserResponseModel.class);
+        }
+        return new ResponseEntity<>(returnValue, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/{filter}/{value}/validatePassword")
+    public ResponseEntity<ValidatePasswordResponseModel> validatePassword(
+            @Valid @RequestBody ValidateUserPasswordRequestModel passwordDetails,
+            @PathVariable(value = "filter", required = true) String filter,
+            @PathVariable(value = "value", required = true) String value
+    ) {
+        if (!filter.matches("(?i)uid|user_name|email_address"))
+            throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
+        ValidatePasswordResponseModel returnValue = new ValidatePasswordResponseModel();
+        if (filter.matches("(?i)uid")) {
+            returnValue.setSuccess(userService.validateUserPasswordBasedOnUid(value, passwordDetails));
+        }
+        if (filter.matches("(?i)user_name")) {
+            returnValue.setSuccess(userService.validateUserPasswordBasedOnUserName(value, passwordDetails));
+        }
+        if (filter.matches("(?i)email_address")) {
+            returnValue.setSuccess(userService.validateUserPasswordBasedOnEmailAddress(value, passwordDetails));
+        }
+        if (!returnValue.isSuccess())
+            throw new EntityServiceException("Provided password is wrong!");
         return new ResponseEntity<>(returnValue, HttpStatus.OK);
     }
 }

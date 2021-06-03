@@ -24,8 +24,8 @@ public class ExceptionsHandler {
         return new ResponseEntity<>(returnValue, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler(value = {UserServiceException.class})
-    public ResponseEntity<Object> handleUserServiceException(UserServiceException ex, WebRequest request) {
+    @ExceptionHandler(value = {EntityServiceException.class})
+    public ResponseEntity<Object> handleUserServiceException(EntityServiceException ex, WebRequest request) {
         ErrorMessage returnValue = new ErrorMessage();
         returnValue.setDetails(ex.getMessage());
         returnValue.setError("BAD REQUEST");
