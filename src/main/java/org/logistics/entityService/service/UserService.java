@@ -36,4 +36,16 @@ public interface UserService {
     boolean validateUserPasswordBasedOnUserName(String userName, ValidateUserPasswordRequestModel passwordDetails);
 
     boolean validateUserPasswordBasedOnEmailAddress(String emailAddress, ValidateUserPasswordRequestModel passwordDetails);
+
+    boolean updateUserPasswordBasedOnUid(String uid, String oldPassword, String newPassword);
+
+    boolean updateUserPasswordBasedOnUserName(String userName, String oldPassword, String newPassword);
+
+    boolean updateUserPasswordBasedOnEmailAddress(String emailAddress, String oldPassword, String newPassword);
+
+    boolean resetUserPasswordBasedOnUid(String uid, String password);
+
+    boolean resetUserPasswordBasedOnUserName(String userName, String password);
+
+    boolean resetUserPasswordBasedOnEmailAddress(String emailAddress, String password);
 }

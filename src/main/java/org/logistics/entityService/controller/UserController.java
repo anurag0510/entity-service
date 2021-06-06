@@ -3,6 +3,7 @@ package org.logistics.entityService.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.logistics.entityService.exceptions.EntityServiceException;
 import org.logistics.entityService.model.request.CreateUserRequestModel;
+import org.logistics.entityService.model.request.UpdateUserPasswordRequestModel;
 import org.logistics.entityService.model.request.UpdateUserRequestModel;
 import org.logistics.entityService.model.request.ValidateUserPasswordRequestModel;
 import org.logistics.entityService.model.response.CreateUserResponseModel;
@@ -160,6 +161,50 @@ public class UserController {
         }
         if (!returnValue.isSuccess())
             throw new EntityServiceException("Provided password is wrong!");
+        return new ResponseEntity<>(returnValue, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/{filter}/{value}/updatePassword")
+    public ResponseEntity<ValidatePasswordResponseModel> updatePassword(
+            @Valid @RequestBody UpdateUserPasswordRequestModel updateUserPasswordDetails,
+            @PathVariable(value = "filter", required = true) String filter,
+            @PathVariable(value = "value", required = true) String value
+    ) {
+        if (!filter.matches("(?i)uid|user_name|email_address"))
+            throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
+        ValidatePasswordResponseModel returnValue = new ValidatePasswordResponseModel();
+        if (filter.matches("(?i)uid")) {
+            returnValue.setSuccess(userService.updateUserPasswordBasedOnUid(value, updateUserPasswordDetails.getOldPassword(), updateUserPasswordDetails.getNewPassword()));
+        }
+        if (filter.matches("(?i)user_name")) {
+            returnValue.setSuccess(userService.updateUserPasswordBasedOnUserName(value, updateUserPasswordDetails.getOldPassword(), updateUserPasswordDetails.getNewPassword()));
+        }
+        if (filter.matches("(?i)email_address")) {
+            returnValue.setSuccess(userService.updateUserPasswordBasedOnEmailAddress(value, updateUserPasswordDetails.getOldPassword(), updateUserPasswordDetails.getNewPassword()));
+        }
+        if (!returnValue.isSuccess())
+            throw new EntityServiceException("Provided password is wrong!");
+        return new ResponseEntity<>(returnValue, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/{filter}/{value}/resetPassword")
+    public ResponseEntity<ValidatePasswordResponseModel> resetPassword(
+            @Valid @RequestBody ValidateUserPasswordRequestModel resetUserPasswordDetails,
+            @PathVariable(value = "filter", required = true) String filter,
+            @PathVariable(value = "value", required = true) String value
+    ) {
+        if (!filter.matches("(?i)uid|user_name|email_address"))
+            throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
+        ValidatePasswordResponseModel returnValue = new ValidatePasswordResponseModel();
+        if (filter.matches("(?i)uid")) {
+            returnValue.setSuccess(userService.resetUserPasswordBasedOnUid(value, resetUserPasswordDetails.getPassword()));
+        }
+        if (filter.matches("(?i)user_name")) {
+            returnValue.setSuccess(userService.resetUserPasswordBasedOnUserName(value, resetUserPasswordDetails.getPassword()));
+        }
+        if (filter.matches("(?i)email_address")) {
+            returnValue.setSuccess(userService.resetUserPasswordBasedOnEmailAddress(value, resetUserPasswordDetails.getPassword()));
+        }
         return new ResponseEntity<>(returnValue, HttpStatus.OK);
     }
 }

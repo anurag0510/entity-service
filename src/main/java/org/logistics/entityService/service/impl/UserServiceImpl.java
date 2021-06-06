@@ -203,6 +203,81 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
+    @Override
+    public boolean updateUserPasswordBasedOnUid(String uid, String oldPassword, String newPassword) {
+        List<UserDto> users = getAllUsersWithUid(uid, false);
+        if (users.size() == 0)
+            throw new EntityServiceException("No user exist in system with uid : " + uid);
+        UserDto systemUser = users.get(0);
+        if (systemUser.getPassword().equals(utils.getEncryptedValue(systemUser.getSalt() + oldPassword, "SHA-512"))) {
+            String newEncryptedPassword = utils.getEncryptedValue(systemUser.getSalt() + newPassword, "SHA-512");
+            usersRepository.updatePasswordBasedOnUid(newEncryptedPassword, uid);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateUserPasswordBasedOnUserName(String userName, String oldPassword, String newPassword) {
+        List<UserDto> users = getAllUsersWithUserName(userName, false);
+        if (users.size() == 0)
+            throw new EntityServiceException("No user exist in system with user_name : " + userName);
+        UserDto systemUser = users.get(0);
+        if (systemUser.getPassword().equals(utils.getEncryptedValue(systemUser.getSalt() + oldPassword, "SHA-512"))) {
+            String newEncryptedPassword = utils.getEncryptedValue(systemUser.getSalt() + newPassword, "SHA-512");
+            usersRepository.updatePasswordBasedOnUserName(newEncryptedPassword, userName);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateUserPasswordBasedOnEmailAddress(String emailAddress, String oldPassword, String newPassword) {
+        List<UserDto> users = getAllUsersWithEmailAddress(emailAddress, false);
+        if (users.size() == 0)
+            throw new EntityServiceException("No user exist in system with email_address : " + emailAddress);
+        UserDto systemUser = users.get(0);
+        if (systemUser.getPassword().equals(utils.getEncryptedValue(systemUser.getSalt() + oldPassword, "SHA-512"))) {
+            String newEncryptedPassword = utils.getEncryptedValue(systemUser.getSalt() + newPassword, "SHA-512");
+            usersRepository.updatePasswordBasedOnEmailAddress(newEncryptedPassword, emailAddress);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean resetUserPasswordBasedOnUid(String uid, String password) {
+        List<UserDto> users = getAllUsersWithUid(uid, false);
+        if (users.size() == 0)
+            throw new EntityServiceException("No user exist in system with uid : " + uid);
+        UserDto systemUser = users.get(0);
+        String newEncryptedPassword = utils.getEncryptedValue(systemUser.getSalt() + password, "SHA-512");
+        usersRepository.updatePasswordBasedOnUid(newEncryptedPassword, uid);
+        return true;
+    }
+
+    @Override
+    public boolean resetUserPasswordBasedOnUserName(String userName, String password) {
+        List<UserDto> users = getAllUsersWithUserName(userName, false);
+        if (users.size() == 0)
+            throw new EntityServiceException("No user exist in system with user_name : " + userName);
+        UserDto systemUser = users.get(0);
+        String newEncryptedPassword = utils.getEncryptedValue(systemUser.getSalt() + password, "SHA-512");
+        usersRepository.updatePasswordBasedOnUserName(newEncryptedPassword, userName);
+        return true;
+    }
+
+    @Override
+    public boolean resetUserPasswordBasedOnEmailAddress(String emailAddress, String password) {
+        List<UserDto> users = getAllUsersWithEmailAddress(emailAddress, false);
+        if (users.size() == 0)
+            throw new EntityServiceException("No user exist in system with email_address : " + emailAddress);
+        UserDto systemUser = users.get(0);
+        String newEncryptedPassword = utils.getEncryptedValue(systemUser.getSalt() + password, "SHA-512");
+        usersRepository.updatePasswordBasedOnEmailAddress(newEncryptedPassword, emailAddress);
+        return true;
+    }
+
     private void checkExceptions(UserDto userDto, UserDto systemUser) {
         if ((userDto.getUserName() != null && !userDto.getUserName().equals(systemUser.getUserName())) && getAllUsersWithUserName(userDto.getUserName(), false).size() != 0)
             throw new EntityServiceException("Can't update user with the user_name : " + userDto.getUserName() + " as system already has a user with same user_name present.");
