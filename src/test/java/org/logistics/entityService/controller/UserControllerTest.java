@@ -8,6 +8,7 @@ import org.logistics.entityService.data.UserEntity;
 import org.logistics.entityService.data.UsersRepository;
 import org.logistics.entityService.exceptions.EntityServiceException;
 import org.logistics.entityService.model.request.CreateUserRequestModel;
+import org.logistics.entityService.model.request.UpdateUserPasswordRequestModel;
 import org.logistics.entityService.model.request.UpdateUserRequestModel;
 import org.logistics.entityService.model.request.ValidateUserPasswordRequestModel;
 import org.logistics.entityService.shared.Utils;
@@ -350,7 +351,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void updateNonExistingUserBasedOnUidTest() {
+    public void deleteNonExistingUserBasedOnUidTest() {
         try {
             userController.deleteUser("uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
@@ -359,7 +360,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void updateNonExistingUserBasedOnUserNameTest() {
+    public void deleteNonExistingUserBasedOnUserNameTest() {
         try {
             userController.deleteUser("user_name", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
@@ -368,7 +369,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void updateNonExistingUserBasedOnEmailAddressTest() {
+    public void deleteNonExistingUserBasedOnEmailAddressTest() {
         try {
             userController.deleteUser("email_address", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
@@ -463,6 +464,179 @@ public class UserControllerTest {
             userController.validatePassword(new ValidateUserPasswordRequestModel("password"), "invalid_filter", "anurag0510@outlook.com");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("Only allowed to filter via : uid, user_name, email_address", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void validatePasswordForNonExistingUserBasedOnUidTest() {
+        try {
+            userController.validatePassword( new ValidateUserPasswordRequestModel("password"),"uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with uid : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void validatePasswordForNonExistingUserBasedOnUserNameTest() {
+        try {
+            userController.validatePassword( new ValidateUserPasswordRequestModel("password"),"user_name", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with user_name : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void validatePasswordForNonExistingUserBasedOnEmailAddressTest() {
+        try {
+            userController.validatePassword(new ValidateUserPasswordRequestModel("password"),"email_address", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with email_address : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void updatePasswordBasedOnUidTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithUid("USR-ddb39364-23f9-4571-af60-d29d6a84bab3")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        Assertions.assertEquals(true, userController.updatePassword(new UpdateUserPasswordRequestModel("password", "updated_password"), "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().isSuccess());
+    }
+
+    @Test
+    public void updatePasswordBasedOnEmailAddressTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithEmailAddress("anurag0510@outlook.com")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        Assertions.assertEquals(true, userController.updatePassword(new UpdateUserPasswordRequestModel("password", "updated_password"), "email_address", "anurag0510@outlook.com").getBody().isSuccess());
+    }
+
+    @Test
+    public void updatePasswordBasedOnUserNameTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithUserName("anurag0510")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        Assertions.assertEquals(true, userController.updatePassword(new UpdateUserPasswordRequestModel("password", "updated_password"), "user_name", "anurag0510").getBody().isSuccess());
+    }
+
+    @Test
+    public void updatePasswordBasedOnInvalidFilter() {
+        try {
+            userController.updatePassword(new UpdateUserPasswordRequestModel("password", "updated_password"), "invalid_filter", "anurag0510@outlook.com");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("Only allowed to filter via : uid, user_name, email_address", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void updateProvidingWrongCurrentPasswordBasedOnEmailAddressTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithEmailAddress("anurag0510@outlook.com")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        try {
+            userController.updatePassword(new UpdateUserPasswordRequestModel("wrong_password", "updated_password"), "email_address", "anurag0510@outlook.com");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("Provided password is wrong!", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void updatePasswordForNonExistingUserBasedOnUidTest() {
+        try {
+            userController.updatePassword( new UpdateUserPasswordRequestModel("password", "updated_password"),"uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with uid : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void updatePasswordForNonExistingUserBasedOnUserNameTest() {
+        try {
+            userController.updatePassword( new UpdateUserPasswordRequestModel("password", "updated_password"),"user_name", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with user_name : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void updatePasswordForNonExistingUserBasedOnEmailAddressTest() {
+        try {
+            userController.updatePassword(new UpdateUserPasswordRequestModel("password", "updated_password"),"email_address", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with email_address : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void resetPasswordBasedOnUidTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithUid("USR-ddb39364-23f9-4571-af60-d29d6a84bab3")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        Assertions.assertEquals(true, userController.resetPassword(new ValidateUserPasswordRequestModel("password"), "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().isSuccess());
+    }
+
+    @Test
+    public void resetPasswordBasedOnEmailAddressTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithEmailAddress("anurag0510@outlook.com")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        Assertions.assertEquals(true, userController.resetPassword(new ValidateUserPasswordRequestModel("password"), "email_address", "anurag0510@outlook.com").getBody().isSuccess());
+    }
+
+    @Test
+    public void resetPasswordBasedOnUserNameTest() {
+        String encryptedValue = utils.getEncryptedValue("salt" + "password", "SHA-512");
+        when(usersRepository.findAllActiveUsersWithUserName("anurag0510")).
+                thenReturn(new ArrayList<>(Arrays.asList(
+                        new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", encryptedValue, "salt", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null)
+                )));
+        Assertions.assertEquals(true, userController.resetPassword(new ValidateUserPasswordRequestModel("password"), "user_name", "anurag0510").getBody().isSuccess());
+    }
+
+    @Test
+    public void resetPasswordBasedOnInvalidFilter() {
+        try {
+            userController.resetPassword(new ValidateUserPasswordRequestModel("password"), "invalid_filter", "anurag0510@outlook.com");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("Only allowed to filter via : uid, user_name, email_address", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void resetPasswordForNonExistingUserBasedOnUidTest() {
+        try {
+            userController.resetPassword( new ValidateUserPasswordRequestModel("password"),"uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with uid : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void resetPasswordForNonExistingUserBasedOnUserNameTest() {
+        try {
+            userController.resetPassword( new ValidateUserPasswordRequestModel("password"),"user_name", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with user_name : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void resetPasswordForNonExistingUserBasedOnEmailAddressTest() {
+        try {
+            userController.resetPassword(new ValidateUserPasswordRequestModel("password"),"email_address", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
+        } catch (EntityServiceException ex) {
+            Assertions.assertEquals("No user exist in system with email_address : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
         }
     }
 }
