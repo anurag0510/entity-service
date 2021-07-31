@@ -1,8 +1,11 @@
 package org.logistics.entityService.service.impl;
 
-import org.logistics.entityService.data.UserEntity;
-import org.logistics.entityService.data.UsersRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.logistics.entityService.constants.EntityTypes;
+import org.logistics.entityService.data.entities.UserEntity;
+import org.logistics.entityService.data.repositories.UsersRepository;
 import org.logistics.entityService.exceptions.EntityServiceException;
+import org.logistics.entityService.kafka.Producer;
 import org.logistics.entityService.model.request.ValidateUserPasswordRequestModel;
 import org.logistics.entityService.service.UserService;
 import org.logistics.entityService.shared.UserDto;
@@ -18,26 +21,30 @@ import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
 
     private UsersRepository usersRepository;
+    private Producer event;
     private Utils utils;
 
     @Autowired
-    public UserServiceImpl(Utils utils, UsersRepository usersRepository) {
+    public UserServiceImpl(Utils utils, UsersRepository usersRepository, Producer event) {
         this.utils = utils;
         this.usersRepository = usersRepository;
+        this.event = event;
     }
 
     @Override
-    public UserDto createUser(UserDto userDto) {
-        userDto.setUid("USR-" + utils.getUniqueId());
+    public UserDto createUser(UserDto userDto, String requesterId) {
+        userDto.setUid(EntityTypes.USR.name() + "-" + utils.getUniqueId());
         String salt = utils.getEncryptedValue(utils.getUniqueId() + new Date().getTime(), "MD5");
         userDto.setSalt(salt);
         userDto.setPassword(utils.getEncryptedValue(salt + userDto.getPassword(), "SHA-512"));
         userDto.setActive(true);
+        userDto.setCreatedBy(requesterId);
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
@@ -48,6 +55,8 @@ public class UserServiceImpl implements UserService {
         if (usersRepository.findByMobileNumber(userEntity.getMobileNumber(), userEntity.getCountryCode()) > 0)
             throw new EntityServiceException("User With mobileNumber " + userEntity.getMobileNumber() + " and country code " + userEntity.getCountryCode() + " already exists in system.");
         usersRepository.save(userEntity);
+        modelMapper.map(userEntity, userDto);
+        event.sendUserEvent("create_user", userDto);
         return userDto;
     }
 
@@ -92,38 +101,47 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto updateUserBasedOnUid(UserDto userDto, String uid) {
+    public UserDto updateUserBasedOnUid(UserDto userDto, String uid, String requesterId) {
         List<UserDto> users = getAllUsersWithUid(uid, false);
         if (users.size() == 0)
             throw new EntityServiceException("No user exist in system with uid : " + uid);
         UserDto systemUser = users.get(0);
         checkExceptions(userDto, systemUser);
         setUserDtoData(userDto, systemUser);
-        usersRepository.updateUserBasedOnUid(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), uid);
+        userDto.setUpdatedBy(requesterId);
+        userDto.setUpdatedAt(new Date());
+        usersRepository.updateUserBasedOnUid(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), userDto.getUpdatedBy(), uid);
+        event.sendUserEvent("update_user", userDto);
         return userDto;
     }
 
     @Override
-    public UserDto updateUserBasedOnUserName(UserDto userDto, String userName) {
+    public UserDto updateUserBasedOnUserName(UserDto userDto, String userName, String requesterId) {
         List<UserDto> users = getAllUsersWithUserName(userName, false);
         if (users.size() == 0)
             throw new EntityServiceException("No user exist in system with user_name : " + userName);
         UserDto systemUser = users.get(0);
         checkExceptions(userDto, systemUser);
         setUserDtoData(userDto, systemUser);
-        usersRepository.updateUserBasedOnUserName(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), userName);
+        userDto.setUpdatedBy(requesterId);
+        userDto.setUpdatedAt(new Date());
+        usersRepository.updateUserBasedOnUserName(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), userDto.getUpdatedBy(), userName);
+        event.sendUserEvent("update_user", userDto);
         return userDto;
     }
 
     @Override
-    public UserDto updateUserBasedOnEmailAddress(UserDto userDto, String emailAddress) {
+    public UserDto updateUserBasedOnEmailAddress(UserDto userDto, String emailAddress, String requesterId) {
         List<UserDto> users = getAllUsersWithEmailAddress(emailAddress, false);
         if (users.size() == 0)
             throw new EntityServiceException("No user exist in system with email_address : " + emailAddress);
         UserDto systemUser = users.get(0);
         checkExceptions(userDto, systemUser);
         setUserDtoData(userDto, systemUser);
-        usersRepository.updateUserBasedOnEmailAddress(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), emailAddress);
+        userDto.setUpdatedBy(requesterId);
+        userDto.setUpdatedAt(new Date());
+        usersRepository.updateUserBasedOnEmailAddress(userDto.getUserName(), userDto.getFirstName(), userDto.getLastName(), userDto.getEmailAddress(), userDto.getMobileNumber(), userDto.getCountryCode(), userDto.getCountry(), userDto.getCity(), userDto.getAddress(), userDto.getUpdatedBy(), emailAddress);
+        event.sendUserEvent("update_user", userDto);
         return userDto;
     }
 
@@ -145,6 +163,7 @@ public class UserServiceImpl implements UserService {
         UserDto systemUser = users.get(0);
         usersRepository.deleteUserBasedOnUid(uid);
         systemUser.setDeleted(true);
+        event.sendUserEvent("delete_user", systemUser);
         return systemUser;
     }
 
@@ -156,6 +175,7 @@ public class UserServiceImpl implements UserService {
         UserDto systemUser = users.get(0);
         usersRepository.deleteUserBasedOnUserName(userName);
         systemUser.setDeleted(true);
+        event.sendUserEvent("delete_user", systemUser);
         return systemUser;
     }
 
@@ -167,6 +187,7 @@ public class UserServiceImpl implements UserService {
         UserDto systemUser = users.get(0);
         usersRepository.deleteUserBasedOnEmailAddress(emailAddress);
         systemUser.setDeleted(true);
+        event.sendUserEvent("delete_user", systemUser);
         return systemUser;
     }
 
@@ -310,5 +331,9 @@ public class UserServiceImpl implements UserService {
             userDto.setAddress(systemUser.getAddress());
         if (userDto.getActive() != systemUser.getActive())
             userDto.setActive(systemUser.getActive());
+        if (userDto.getCreatedBy() != systemUser.getCreatedBy())
+            userDto.setCreatedBy(systemUser.getCreatedBy());
+        if (userDto.getCreatedAt() != systemUser.getCreatedAt())
+            userDto.setCreatedAt(systemUser.getCreatedAt());
     }
 }

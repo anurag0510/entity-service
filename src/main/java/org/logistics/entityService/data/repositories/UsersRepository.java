@@ -1,5 +1,6 @@
-package org.logistics.entityService.data;
+package org.logistics.entityService.data.repositories;
 
+import org.logistics.entityService.data.entities.UserEntity;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -57,16 +58,16 @@ public interface UsersRepository extends CrudRepository<UserEntity, Long> {
     Iterable<UserEntity> findAllUsersWithMobileNumber(String countryCode, String mobileNumber);
 
     @Modifying
-    @Query(value = "UPDATE users SET user_name = ?1, first_name = ?2, last_name = ?3, email_address = ?4, mobile_number = ?5, country_code = ?6, country = ?7, city = ?8, address = ?9, updated_at = CURRENT_TIMESTAMP WHERE uid = ?10 AND is_deleted = false AND is_active = true", nativeQuery = true)
-    void updateUserBasedOnUid(String userName, String firstName, String lastName, String emailAddress, String mobileNumber, String countryCode, String country, String city, String address, String uid);
+    @Query(value = "UPDATE users SET user_name = ?1, first_name = ?2, last_name = ?3, email_address = ?4, mobile_number = ?5, country_code = ?6, country = ?7, city = ?8, address = ?9, updated_at = CURRENT_TIMESTAMP, updated_by=?10 WHERE uid = ?11 AND is_deleted = false AND is_active = true", nativeQuery = true)
+    void updateUserBasedOnUid(String userName, String firstName, String lastName, String emailAddress, String mobileNumber, String countryCode, String country, String city, String address, String updatedBy, String uid);
 
     @Modifying
-    @Query(value = "UPDATE users SET user_name = ?1, first_name = ?2, last_name = ?3, email_address = ?4, mobile_number = ?5, country_code = ?6, country = ?7, city = ?8, address = ?9, updated_at = CURRENT_TIMESTAMP WHERE user_name = ?10 AND is_deleted = false AND is_active = true", nativeQuery = true)
-    void updateUserBasedOnUserName(String userName, String firstName, String lastName, String emailAddress, String mobileNumber, String countryCode, String country, String city, String address, String oldUserName);
+    @Query(value = "UPDATE users SET user_name = ?1, first_name = ?2, last_name = ?3, email_address = ?4, mobile_number = ?5, country_code = ?6, country = ?7, city = ?8, address = ?9, updated_at = CURRENT_TIMESTAMP, updated_by=?10 WHERE user_name = ?11 AND is_deleted = false AND is_active = true", nativeQuery = true)
+    void updateUserBasedOnUserName(String userName, String firstName, String lastName, String emailAddress, String mobileNumber, String countryCode, String country, String city, String address, String updatedBy, String oldUserName);
 
     @Modifying
-    @Query(value = "UPDATE users SET user_name = ?1, first_name = ?2, last_name = ?3, email_address = ?4, mobile_number = ?5, country_code = ?6, country = ?7, city = ?8, address = ?9, updated_at = CURRENT_TIMESTAMP WHERE email_address = ?10 AND is_deleted = false AND is_active = true", nativeQuery = true)
-    void updateUserBasedOnEmailAddress(String userName, String firstName, String lastName, String emailAddress, String mobileNumber, String countryCode, String country, String city, String address, String emailAddress1);
+    @Query(value = "UPDATE users SET user_name = ?1, first_name = ?2, last_name = ?3, email_address = ?4, mobile_number = ?5, country_code = ?6, country = ?7, city = ?8, address = ?9, updated_at = CURRENT_TIMESTAMP, updated_by=?10 WHERE email_address = ?11 AND is_deleted = false AND is_active = true", nativeQuery = true)
+    void updateUserBasedOnEmailAddress(String userName, String firstName, String lastName, String emailAddress, String mobileNumber, String countryCode, String country, String city, String address, String updatedBy, String emailAddress1);
 
     @Modifying
     @Query(value = "UPDATE users SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE uid = ?1 AND is_deleted = false AND is_active = true", nativeQuery = true)

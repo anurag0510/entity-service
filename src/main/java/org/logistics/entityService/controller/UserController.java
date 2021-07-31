@@ -17,15 +17,19 @@ import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.lang.reflect.Type;
 import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("v1/user")
+@Validated
+@RequestMapping("api/v1/user")
 public class UserController {
 
     @Autowired
@@ -50,12 +54,13 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<CreateUserResponseModel> createUser(@Valid @RequestBody CreateUserRequestModel userDetails) {
+    public ResponseEntity<CreateUserResponseModel> createUser(@Valid @RequestBody CreateUserRequestModel userDetails,
+                                                              @RequestHeader(name = "x-requester-id", required = false) @Pattern(regexp = "USR-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}") String requesterId) {
         log.info("Request received to create user with details : {} ", userDetails.toString());
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
-        CreateUserResponseModel createUserResponseModel = modelMapper.map(userService.createUser(userDto), CreateUserResponseModel.class);
+        CreateUserResponseModel createUserResponseModel = modelMapper.map(userService.createUser(userDto, requesterId), CreateUserResponseModel.class);
         log.info("Returning Details : {}", createUserResponseModel);
         return new ResponseEntity<>(createUserResponseModel, HttpStatus.CREATED);
     }
@@ -99,8 +104,10 @@ public class UserController {
     public ResponseEntity<CreateUserResponseModel> updateUser(
             @Valid @RequestBody UpdateUserRequestModel userDetails,
             @PathVariable(value = "filter", required = true) String filter,
-            @PathVariable(value = "value", required = true) String value
+            @PathVariable(value = "value", required = true) String value,
+            @RequestHeader(name = "x-requester-id", required = true) @NotNull @Pattern(regexp = "USR-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}") String requesterId
     ) {
+        log.info(requesterId);
         if (!filter.matches("(?i)uid|user_name|email_address"))
             throw new EntityServiceException("Only allowed to filter via : uid, user_name, email_address");
         CreateUserResponseModel returnValue = null;
@@ -108,13 +115,13 @@ public class UserController {
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
         if (filter.matches("(?i)uid")) {
-            returnValue = modelMapper.map(userService.updateUserBasedOnUid(userDto, value), CreateUserResponseModel.class);
+            returnValue = modelMapper.map(userService.updateUserBasedOnUid(userDto, value, requesterId), CreateUserResponseModel.class);
         }
         if (filter.matches("(?i)user_name")) {
-            returnValue = modelMapper.map(userService.updateUserBasedOnUserName(userDto, value), CreateUserResponseModel.class);
+            returnValue = modelMapper.map(userService.updateUserBasedOnUserName(userDto, value, requesterId), CreateUserResponseModel.class);
         }
         if (filter.matches("(?i)email_address")) {
-            returnValue = modelMapper.map(userService.updateUserBasedOnEmailAddress(userDto, value), CreateUserResponseModel.class);
+            returnValue = modelMapper.map(userService.updateUserBasedOnEmailAddress(userDto, value, requesterId), CreateUserResponseModel.class);
         }
         return new ResponseEntity<>(returnValue, HttpStatus.OK);
     }

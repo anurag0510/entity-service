@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface UserService {
 
-    UserDto createUser(UserDto userDto);
+    UserDto createUser(UserDto userDto, String requesterId);
 
     List<UserDto> getAllUsers(boolean allActiveUsers);
 
@@ -17,11 +17,11 @@ public interface UserService {
 
     List<UserDto> getAllUsersWithUserName(String value, boolean all);
 
-    UserDto updateUserBasedOnUid(UserDto userDto, String uid);
+    UserDto updateUserBasedOnUid(UserDto userDto, String uid, String requesterId);
 
-    UserDto updateUserBasedOnUserName(UserDto userDto, String userName);
+    UserDto updateUserBasedOnUserName(UserDto userDto, String userName, String requesterId);
 
-    UserDto updateUserBasedOnEmailAddress(UserDto userDto, String emailAddress);
+    UserDto updateUserBasedOnEmailAddress(UserDto userDto, String emailAddress, String requesterId);
 
     List<UserDto> getAllUsersWithMobileNumber(String countryCode, String mobileNumber, boolean allUsers);
 

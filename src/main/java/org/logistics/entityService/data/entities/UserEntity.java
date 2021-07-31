@@ -1,4 +1,4 @@
-package org.logistics.entityService.data;
+package org.logistics.entityService.data.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -75,4 +75,12 @@ public class UserEntity implements Serializable {
 
     @Column(name = "deleted_at")
     private Date deletedAt;
+
+    @Column(name = "created_by")
+    @Pattern(regexp = "USR-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", message = "Failed to match user id pattern.")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    @Pattern(regexp = "USR-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", message = "Failed to match user id pattern.")
+    private String updatedBy;
 }
