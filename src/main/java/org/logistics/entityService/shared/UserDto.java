@@ -1,5 +1,6 @@
 package org.logistics.entityService.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,7 +28,9 @@ public class UserDto {
     private String countryCode;
     @JsonProperty("mobile_number")
     private String mobileNumber;
+    @JsonIgnore
     private String password;
+    @JsonIgnore
     private String salt;
     private String address;
     private String country;
