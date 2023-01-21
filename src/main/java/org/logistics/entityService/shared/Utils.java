@@ -1,5 +1,7 @@
 package org.logistics.entityService.shared;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 
 import org.springframework.stereotype.Service;
@@ -30,5 +32,11 @@ public class Utils {
             e.printStackTrace();
         }
         return encryptedValue;
+    }
+
+    public String getValueForSpanClass(String htmlString, String className) {
+        Document doc = Jsoup.parse(htmlString);
+        String returnValue = doc.select("span[class=" + className + "]").text();
+        return returnValue.length() == 0 ? null : returnValue;
     }
 }
