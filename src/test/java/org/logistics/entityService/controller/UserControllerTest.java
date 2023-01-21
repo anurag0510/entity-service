@@ -60,8 +60,6 @@ public class UserControllerTest {
 
     @Test
     public void createUserTest() {
-        when(usersRepository.save(new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", "abrakadabra", "saltdabra", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null, null, null))).
-                thenReturn(new UserEntity(1L, "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "91", "1231231234", "abrakadabra", "saltdabra", "Electronic City, Bangalore", "India", "Bangalore", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()), true, false, null, null, null));
         Assertions.assertEquals("anurag0510", userController.createUser(new CreateUserRequestModel("anurag0510", "Anurag", "Dubey", "anurag0510@outlook.com", "9889258114", "91", "1231231234", "India", "Bangalore", "Electronic City, Bangalore"), null).getBody().getUserName());
     }
 
@@ -203,8 +201,8 @@ public class UserControllerTest {
         UpdateUserRequestModel userDetaisToBeUpdated = new UpdateUserRequestModel();
         userDetaisToBeUpdated.setFirstName("Updated First");
         userDetaisToBeUpdated.setLastName("Updated Last");
-        Assertions.assertEquals("Updated First", userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "YGCFSB").getBody().getFirstName());
-        Assertions.assertEquals("Updated Last", userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", null).getBody().getLastName());
+        Assertions.assertEquals("Updated First", userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().getFirstName());
+        Assertions.assertEquals("Updated Last", userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().getLastName());
     }
 
     @Test
@@ -216,8 +214,8 @@ public class UserControllerTest {
         UpdateUserRequestModel userDetaisToBeUpdated = new UpdateUserRequestModel();
         userDetaisToBeUpdated.setFirstName("Updated First");
         userDetaisToBeUpdated.setLastName("Updated Last");
-        Assertions.assertEquals("Updated First", userController.updateUser(userDetaisToBeUpdated, "user_name", "anurag0510", null).getBody().getFirstName());
-        Assertions.assertEquals("Updated Last", userController.updateUser(userDetaisToBeUpdated, "user_name", "anurag0510", null).getBody().getLastName());
+        Assertions.assertEquals("Updated First", userController.updateUser(userDetaisToBeUpdated, "user_name", "anurag0510", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().getFirstName());
+        Assertions.assertEquals("Updated Last", userController.updateUser(userDetaisToBeUpdated, "user_name", "anurag0510", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().getLastName());
     }
 
     @Test
@@ -229,8 +227,8 @@ public class UserControllerTest {
         UpdateUserRequestModel userDetaisToBeUpdated = new UpdateUserRequestModel();
         userDetaisToBeUpdated.setFirstName("Updated First");
         userDetaisToBeUpdated.setLastName("Updated Last");
-        Assertions.assertEquals("Updated First", userController.updateUser(userDetaisToBeUpdated, "email_address", "anurag0510@outlook.com", null).getBody().getFirstName());
-        Assertions.assertEquals("Updated Last", userController.updateUser(userDetaisToBeUpdated, "email_address", "anurag0510@outlook.com", null).getBody().getLastName());
+        Assertions.assertEquals("Updated First", userController.updateUser(userDetaisToBeUpdated, "email_address", "anurag0510@outlook.com", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().getFirstName());
+        Assertions.assertEquals("Updated Last", userController.updateUser(userDetaisToBeUpdated, "email_address", "anurag0510@outlook.com", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3").getBody().getLastName());
     }
 
     @Test
@@ -246,7 +244,7 @@ public class UserControllerTest {
         UpdateUserRequestModel userDetaisToBeUpdated = new UpdateUserRequestModel();
         userDetaisToBeUpdated.setUserName("anurag21st");
         try {
-            userController.updateUser(userDetaisToBeUpdated, "email_address", "anurag0510@outlook.com", null);
+            userController.updateUser(userDetaisToBeUpdated, "email_address", "anurag0510@outlook.com", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("Can't update user with the user_name : anurag21st as system already has a user with same user_name present.", ex.getMessage());
         }
@@ -265,7 +263,7 @@ public class UserControllerTest {
         UpdateUserRequestModel userDetaisToBeUpdated = new UpdateUserRequestModel();
         userDetaisToBeUpdated.setEmailAddress("anurag@gmail.com");
         try {
-            userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", null);
+            userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("Can't update user with the email_address : anurag@gmail.com as system already has a user with same email address present.", ex.getMessage());
         }
@@ -285,7 +283,7 @@ public class UserControllerTest {
         userDetaisToBeUpdated.setCountryCode("91");
         userDetaisToBeUpdated.setMobileNumber("1231231237");
         try {
-            userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", null);
+            userController.updateUser(userDetaisToBeUpdated, "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("Can't update user with the mobile_number : 1231231237 as system already has a user with same mobile number present.", ex.getMessage());
         }
@@ -294,7 +292,7 @@ public class UserControllerTest {
     @Test
     public void updateUserBasedOnNonExistingUidTest() {
         try {
-            userController.updateUser(new UpdateUserRequestModel(), "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", null);
+            userController.updateUser(new UpdateUserRequestModel(), "uid", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("No user exist in system with uid : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
         }
@@ -303,7 +301,7 @@ public class UserControllerTest {
     @Test
     public void updateUserBasedOnNonExistingUserNameTest() {
         try {
-            userController.updateUser(new UpdateUserRequestModel(), "user_name", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", null);
+            userController.updateUser(new UpdateUserRequestModel(), "user_name", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("No user exist in system with user_name : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
         }
@@ -312,7 +310,7 @@ public class UserControllerTest {
     @Test
     public void updateUserBasedOnNonExistingEmailAddressTest() {
         try {
-            userController.updateUser(new UpdateUserRequestModel(), "email_address", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", null);
+            userController.updateUser(new UpdateUserRequestModel(), "email_address", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("No user exist in system with email_address : USR-ddb39364-23f9-4571-af60-d29d6a84bab3", ex.getMessage());
         }
@@ -321,7 +319,7 @@ public class UserControllerTest {
     @Test
     public void updateUserBasedOnInvalidFilter() {
         try {
-            userController.updateUser(new UpdateUserRequestModel(), "invalid_filter", "anurag0510@outlook.com", null);
+            userController.updateUser(new UpdateUserRequestModel(), "invalid_filter", "anurag0510@outlook.com", "USR-ddb39364-23f9-4571-af60-d29d6a84bab3");
         } catch (EntityServiceException ex) {
             Assertions.assertEquals("Only allowed to filter via : uid, user_name, email_address", ex.getMessage());
         }
