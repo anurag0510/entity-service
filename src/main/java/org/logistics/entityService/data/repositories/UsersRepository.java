@@ -1,13 +1,14 @@
 package org.logistics.entityService.data.repositories;
 
 import org.logistics.entityService.data.entities.UserEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UsersRepository extends CrudRepository<UserEntity, Long> {
+public interface UsersRepository extends JpaRepository<UserEntity, Long> {
 
     @Query(value = "SELECT COUNT(u) FROM users u WHERE u.user_name LIKE ?1 AND u.is_active = true",
             nativeQuery = true)
@@ -49,11 +50,11 @@ public interface UsersRepository extends CrudRepository<UserEntity, Long> {
             nativeQuery = true)
     Iterable<UserEntity> findAllUsersWithEmailAddress(String emailAddress);
 
-    @Query(value = "SELECT * FROM users u WHERE u.mobile_number LIKE ?1 and u.country_code LIKE ?2 and u.is_active = true AND u.is_deleted = false",
+    @Query(value = "SELECT * FROM users u WHERE u.mobile_number LIKE ?2 and u.country_code LIKE ?1 and u.is_active = true AND u.is_deleted = false",
             nativeQuery = true)
     Iterable<UserEntity> findAllActiveUsersWithMobileNumber(String countryCode, String mobileNumber);
 
-    @Query(value = "SELECT * FROM users u WHERE u.mobile_number LIKE ?1 and u.country_code LIKE ?2",
+    @Query(value = "SELECT * FROM users u WHERE u.mobile_number LIKE ?2 and u.country_code LIKE ?1",
             nativeQuery = true)
     Iterable<UserEntity> findAllUsersWithMobileNumber(String countryCode, String mobileNumber);
 
