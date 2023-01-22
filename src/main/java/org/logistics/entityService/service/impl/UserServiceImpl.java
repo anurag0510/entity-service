@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
             throw new EntityServiceException("User With emailAddress " + userEntity.getEmailAddress() + " already exists in system.");
         if (usersRepository.findByMobileNumber(userEntity.getMobileNumber(), userEntity.getCountryCode()) > 0)
             throw new EntityServiceException("User With mobileNumber " + userEntity.getMobileNumber() + " and country code " + userEntity.getCountryCode() + " already exists in system.");
-        usersRepository.save(userEntity);
+        usersRepository.saveAndFlush(userEntity);
         modelMapper.map(userEntity, userDto);
         event.sendUserEvent("create_user", userDto);
         return userDto;
@@ -304,7 +304,7 @@ public class UserServiceImpl implements UserService {
             throw new EntityServiceException("Can't update user with the user_name : " + userDto.getUserName() + " as system already has a user with same user_name present.");
         if ((userDto.getEmailAddress() != null && !userDto.getEmailAddress().equals(systemUser.getEmailAddress())) && getAllUsersWithEmailAddress(userDto.getEmailAddress(), false).size() != 0)
             throw new EntityServiceException("Can't update user with the email_address : " + userDto.getEmailAddress() + " as system already has a user with same email address present.");
-        if ((userDto.getMobileNumber() != null && !userDto.getMobileNumber().equals(systemUser.getMobileNumber())) && getAllUsersWithMobileNumber(userDto.getCountryCode(), systemUser.getMobileNumber(), false).size() != 0)
+        if ((userDto.getMobileNumber() != null && !userDto.getMobileNumber().equals(systemUser.getMobileNumber())) && getAllUsersWithMobileNumber(userDto.getCountryCode(), userDto.getMobileNumber(), false).size() != 0)
             throw new EntityServiceException("Can't update user with the mobile_number : " + userDto.getMobileNumber() + " as system already has a user with same mobile number present.");
     }
 
