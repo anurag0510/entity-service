@@ -12,7 +12,7 @@ public interface CompanyService {
 
     List<CompanyDto> getAllCompaniesBasedOnCid(String cid, boolean allCompanies);
 
-    CompanyDto updateCompany(String companyId, CompanyDto companyDto, String requesterId);
+    CompanyDto updateCompany(String companyId, CompanyDto companyDto, String requesterId, boolean considerPlacesModification);
 
     CompanyDto updateCompanyStatus(String companyId, CompanyDto companyDto, String requesterId);
 

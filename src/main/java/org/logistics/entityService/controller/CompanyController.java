@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import java.lang.reflect.Type;
@@ -33,8 +34,6 @@ public class CompanyController {
     @Autowired
     CompanyService companyService;
 
-    @Autowired
-    PlaceController placeController;
 
     @PostMapping
     public ResponseEntity<CreateCompanyResponseModel> createCompany(
@@ -105,7 +104,7 @@ public class CompanyController {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         CompanyDto companyDto = modelMapper.map(companyDetails, CompanyDto.class);
-        CreateCompanyResponseModel updatedCompanyResponseModel = modelMapper.map(companyService.updateCompany(cid, companyDto, requesterId), CreateCompanyResponseModel.class);
+        CreateCompanyResponseModel updatedCompanyResponseModel = modelMapper.map(companyService.updateCompany(cid, companyDto, requesterId, true), CreateCompanyResponseModel.class);
         return new ResponseEntity<>(updatedCompanyResponseModel, HttpStatus.OK);
     }
 

@@ -3,6 +3,7 @@ package org.logistics.entityService.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.logistics.entityService.constants.EntityTypes;
 import org.logistics.entityService.controller.PlaceController;
+import org.logistics.entityService.controller.UserController;
 import org.logistics.entityService.data.entities.CompanyEntity;
 import org.logistics.entityService.data.repositories.CompanyRepository;
 import org.logistics.entityService.exceptions.EntityServiceException;
@@ -33,12 +34,14 @@ public class CompanyServiceImpl implements CompanyService {
     private Producer event;
     private Utils utils;
     PlaceController placeController;
+    UserController userController;
 
     @Autowired
-    public CompanyServiceImpl(CompanyRepository companyRepository, Producer event, Utils utils, PlaceController placeController) {
+    public CompanyServiceImpl(CompanyRepository companyRepository, Producer event, Utils utils, PlaceController placeController, UserController userController) {
         this.utils = utils;
         this.companyRepository = companyRepository;
         this.placeController = placeController;
+        this.userController = userController;
         this.event = event;
     }
 
@@ -47,14 +50,6 @@ public class CompanyServiceImpl implements CompanyService {
         log.info("company : {} and requester : {}", companyDto, requesterId);
         ResponseEntity<CreatePlaceResponseModel> createdPlaceDetails = null;
         ResponseEntity<CreatePlaceResponseModel> createdHeadOfficeDetails = null;
-        if(companyDto.getPlace() != null) {
-            createdPlaceDetails = placeController.createPlace(companyDto.getPlace(), requesterId);
-            companyDto.setPlaceId(createdPlaceDetails.getBody().getPid());
-        }
-        if(companyDto.getHeadOffice() != null) {
-            createdHeadOfficeDetails = placeController.createPlace(companyDto.getHeadOffice(), requesterId);
-            companyDto.setHeadOfficeId(createdHeadOfficeDetails.getBody().getPid());
-        }
         companyDto.setCid(EntityTypes.COM.name() + "-" + utils.getUniqueId());
         companyDto.setIsActive(true);
         companyDto.setIsDeleted(false);
@@ -62,19 +57,20 @@ public class CompanyServiceImpl implements CompanyService {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
         CompanyEntity companyEntity = modelMapper.map(companyDto, CompanyEntity.class);
-        companyRepository.save(companyEntity);
+        companyRepository.saveAndFlush(companyEntity);
         modelMapper.map(companyEntity, companyDto);
         event.sendCompanyEvent("create_company", companyDto);
-        if(companyDto.getPlaceId() != null) {
+        if (companyDto.getPlace() != null) {
             companyDto.getPlace().setParentId(companyDto.getCid());
-            UpdatePlaceRequestModel updatePlaceRequestModel = modelMapper.map(companyDto.getPlace(), UpdatePlaceRequestModel.class);
-            placeController.updatePlace(updatePlaceRequestModel, requesterId, "pid", companyDto.getPlaceId());
+            createdPlaceDetails = placeController.createPlace(companyDto.getPlace(), requesterId);
+            companyDto.setPlaceId(createdPlaceDetails.getBody().getPid());
         }
-        if(companyDto.getHeadOfficeId() != null) {
+        if (companyDto.getHeadOffice() != null) {
             companyDto.getHeadOffice().setParentId(companyDto.getCid());
-            UpdatePlaceRequestModel updatePlaceRequestModel = modelMapper.map(companyDto.getHeadOffice(), UpdatePlaceRequestModel.class);
-            placeController.updatePlace(updatePlaceRequestModel, requesterId, "pid", companyDto.getHeadOfficeId());
+            createdHeadOfficeDetails = placeController.createPlace(companyDto.getHeadOffice(), requesterId);
+            companyDto.setHeadOfficeId(createdHeadOfficeDetails.getBody().getPid());
         }
+        this.updateCompany(companyDto.getCid(), companyDto, requesterId, false);
         return companyDto;
     }
 
@@ -82,7 +78,7 @@ public class CompanyServiceImpl implements CompanyService {
     public List<CompanyDto> getAllCompanies(boolean allCompanies) {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
-        List<CompanyEntity> post = allCompanies == false ? (List<CompanyEntity>) companyRepository.findAllCompaniesWhereActiveStateIs(true): (List<CompanyEntity>) companyRepository.findAll();
+        List<CompanyEntity> post = allCompanies == false ? (List<CompanyEntity>) companyRepository.findAllCompaniesWhereActiveStateIs(true) : (List<CompanyEntity>) companyRepository.findAll();
         Type listType = new TypeToken<List<CompanyDto>>() {
         }.getType();
         return modelMapper.map(post, listType);
@@ -92,28 +88,30 @@ public class CompanyServiceImpl implements CompanyService {
     public List<CompanyDto> getAllCompaniesBasedOnCid(String cid, boolean allCompanies) {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
-        List<CompanyEntity> post = !allCompanies ? (List<CompanyEntity>) companyRepository.findAllCompaniesBasedOnCidAndAreActive(cid): (List<CompanyEntity>) companyRepository.findAllByCid(cid);
+        List<CompanyEntity> post = !allCompanies ? (List<CompanyEntity>) companyRepository.findAllCompaniesBasedOnCidAndAreActive(cid) : (List<CompanyEntity>) companyRepository.findAllByCid(cid);
         Type listType = new TypeToken<List<CompanyDto>>() {
         }.getType();
         return modelMapper.map(post, listType);
     }
 
     @Override
-    public CompanyDto updateCompany(String companyId, CompanyDto companyDto, String requesterId) {
+    public CompanyDto updateCompany(String companyId, CompanyDto companyDto, String requesterId, boolean considerPlacesModification) {
         List<CompanyEntity> companyEntityList = (List<CompanyEntity>) companyRepository.findAllCompaniesBasedOnCidAndAreActive(companyId);
-        if(companyEntityList.size() == 0 )
+        if (companyEntityList.size() == 0)
             throw new EntityServiceException("No companies found!!!");
         CompanyEntity companyEntity = companyEntityList.get(0);
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
         companyDto.setUpdatedAt(new Date());
         companyDto.setUpdatedBy(requesterId);
-        if(companyDto.getTypes() != null) companyEntity.setTypes(companyDto.getTypes());
+        if (companyDto.getTypes() != null) companyEntity.setTypes(companyDto.getTypes());
         modelMapper.map(companyDto, companyEntity);
         modelMapper.map(companyEntity, companyDto);
-        modifyPlaceDetails(companyDto, companyEntity, requesterId);
-        modifyHeadOfficeDetails(companyDto, companyEntity, requesterId);
-        companyRepository.save(companyEntity);
+        if (considerPlacesModification) {
+            modifyPlaceDetails(companyDto, companyEntity, requesterId);
+            modifyHeadOfficeDetails(companyDto, companyEntity, requesterId);
+        }
+        companyRepository.saveAndFlush(companyEntity);
         event.sendCompanyEvent("update_company", companyDto);
         return companyDto;
     }
@@ -121,7 +119,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     public CompanyDto updateCompanyStatus(String companyId, CompanyDto companyDto, String requesterId) {
         List<CompanyEntity> companyEntityList = (List<CompanyEntity>) companyRepository.findAllByCid(companyId);
-        if(companyEntityList.size() == 0)
+        if (companyEntityList.size() == 0)
             throw new EntityServiceException("No companies found!!!");
         CompanyEntity companyEntity = companyEntityList.get(0);
         ModelMapper modelMapper = new ModelMapper();
@@ -130,7 +128,7 @@ public class CompanyServiceImpl implements CompanyService {
         companyDto.setUpdatedBy(requesterId);
         modelMapper.map(companyDto, companyEntity);
         modelMapper.map(companyEntity, companyDto);
-        companyRepository.save(companyEntity);
+        companyRepository.saveAndFlush(companyEntity);
         event.sendCompanyEvent("update_company", companyDto);
         return companyDto;
     }
@@ -138,18 +136,21 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     public CompanyDto deleteCompany(CompanyDto companyDto, String requesterId) {
         List<CompanyEntity> companyEntityList = (List<CompanyEntity>) companyRepository.findAllByCid(companyDto.getCid());
-        if(companyEntityList.size() == 0)
+        if (companyEntityList.size() == 0)
             throw new EntityServiceException("No companies found!!!");
         CompanyEntity companyEntity = companyEntityList.get(0);
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
         companyDto.setUpdatedAt(new Date());
-        companyDto.setUpdatedBy(requesterId);
+        if (userController.getUser(false, "uid", requesterId).getStatusCode().is2xxSuccessful())
+            companyDto.setUpdatedBy(requesterId);
+        else
+            throw new EntityServiceException("Unauthorized user trying to modify entity details");
         companyDto.setIsDeleted(true);
         companyDto.setDeletedAt(new Date());
         modelMapper.map(companyDto, companyEntity);
         modelMapper.map(companyEntity, companyDto);
-        companyRepository.save(companyEntity);
+        companyRepository.saveAndFlush(companyEntity);
         event.sendCompanyEvent("delete_company", companyDto);
         return companyDto;
     }
@@ -158,7 +159,7 @@ public class CompanyServiceImpl implements CompanyService {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
         ResponseEntity<CreatePlaceResponseModel> createdPlaceDetails = null;
-        if(companyDto.getPlace() != null && companyDto.getPlaceId() != null) {
+        if (companyDto.getPlace() != null && companyDto.getPlaceId() != null) {
             companyDto.getPlace().setParentId(companyDto.getCid());
             UpdatePlaceRequestModel updatePlaceRequestModel = modelMapper.map(companyDto.getPlace(), UpdatePlaceRequestModel.class);
             placeController.updatePlace(updatePlaceRequestModel, requesterId, "pid", companyDto.getPlaceId());
@@ -167,7 +168,7 @@ public class CompanyServiceImpl implements CompanyService {
             createdPlaceDetails = placeController.createPlace(companyDto.getPlace(), requesterId);
             companyDto.setPlaceId(createdPlaceDetails.getBody().getPid());
             companyEntity.setPlaceId(createdPlaceDetails.getBody().getPid());
-        } else if(companyDto.getPlace() == null && companyDto.getPlaceId() != null) {
+        } else if (companyDto.getPlace() == null && companyDto.getPlaceId() != null) {
             companyDto.setPlaceId(null);
             companyEntity.setPlaceId(null);
         }
@@ -177,16 +178,16 @@ public class CompanyServiceImpl implements CompanyService {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT).setSkipNullEnabled(true);
         ResponseEntity<CreatePlaceResponseModel> createdHeadOfficeDetails = null;
-        if(companyDto.getHeadOffice() != null && companyDto.getHeadOfficeId() != null) {
+        if (companyDto.getHeadOffice() != null && companyDto.getHeadOfficeId() != null) {
             companyDto.getHeadOffice().setParentId(companyDto.getCid());
             UpdatePlaceRequestModel updatePlaceRequestModel = modelMapper.map(companyDto.getHeadOffice(), UpdatePlaceRequestModel.class);
             placeController.updatePlace(updatePlaceRequestModel, requesterId, "pid", companyDto.getHeadOfficeId());
-        } else if (companyDto.getHeadOffice() != null && companyDto.getHeadOfficeId() == null){
+        } else if (companyDto.getHeadOffice() != null && companyDto.getHeadOfficeId() == null) {
             companyDto.getHeadOffice().setParentId(companyDto.getCid());
             createdHeadOfficeDetails = placeController.createPlace(companyDto.getHeadOffice(), requesterId);
             companyDto.setHeadOfficeId(createdHeadOfficeDetails.getBody().getPid());
             companyEntity.setHeadOfficeId(createdHeadOfficeDetails.getBody().getPid());
-        } else if(companyDto.getHeadOffice() == null && companyDto.getHeadOfficeId() != null) {
+        } else if (companyDto.getHeadOffice() == null && companyDto.getHeadOfficeId() != null) {
             companyDto.setHeadOfficeId(null);
             companyEntity.setHeadOfficeId(null);
         }
