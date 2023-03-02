@@ -39,7 +39,7 @@ public class Producer {
         EntityEventModel entityEvent = new EntityEventModel();
         entityEvent.setEventType(eventType);
         entityEvent.setMessageBody(placeDto);
-        kafkaTemplate.send(TOPIC_NAME, placeDto.getPid().substring(4), entityEvent);
+        kafkaTemplate.send(TOPIC_NAME, placeDto.getParentId().substring(4), entityEvent);
     }
 
     public void sendRouteEvent(String eventType, RouteDto routeDto) {
